@@ -17,7 +17,8 @@ Generates Bitkini mainnet private keys (raw hex & WIF), compressed public keys, 
 
 # 1. Option A: Install from npm (recommended)
 ```bash
-npm install -g bitkini-keygen```
+npm install -g bitkini-keygen
+```
 
 
 # Option B: Clone the repo for development
@@ -25,26 +26,31 @@ npm install -g bitkini-keygen```
 git clone https://github.com/bitkini/bitkini-keygen.git
 cd bitkini-keygen
 npm install
-chmod +x gen-kini.js  # optional: make CLI executable locally```
+chmod +x gen-kini.js  # optional: make CLI executable locally
+```
 
 
 ## 🛠 Usage
 
 The script generates a customizable number of Bitkini key blocks:
 
-```bash
+
 # Default (5 key blocks)
 ```bash
-bitkini-keygen```
+bitkini-keygen
+```
 
 # Specify number of keys
 ```bash
-bitkini-keygen --count 20```
+bitkini-keygen --count 20
+```
 
 # Or shorthand:
 ```bash
-bitkini-keygen -c 10```
+bitkini-keygen -c 10
+```
 
 # Or run it directly:
 ```bash
-node gen-kini.js --count 7```
+node gen-kini.js --count 7
+```
