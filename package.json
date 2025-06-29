@@ -1,0 +1,19 @@
+{
+  "name": "bitkini-keygen",
+  "version": "1.0.0",
+  "description": "Bitkini Priv Key Generator — WIFs, pubkeys & “K…” addresses in a summer-vibe CLI",
+  "bin": {
+    "bitkini-keygen": "./gen-kini.js"
+  },
+  "scripts": {
+    "start": "node gen-kini.js"
+  },
+  "dependencies": {
+    "bitcoinjs-lib": "^6.x",
+    "tiny-secp256k1": "^1.x",
+    "ecpair": "^3.x",
+    "chalk": "^4.x",
+	"minimist": "^1.x"
+  },
+  "license": "MIT"
+}
