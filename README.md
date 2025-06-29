@@ -17,7 +17,7 @@ Generates Bitkini mainnet private keys (raw hex & WIF), compressed public keys, 
 
 # 1. Option A: Install from npm (recommended)
 ```bash
-npm install -g bitkini-keygen
+sudo npm install -g bitkini-keygen
 ```
 
 
