@@ -1,6 +1,6 @@
 {
   "name": "bitkini-keygen",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Bitkini Priv Key Generator",
   "bin": {
     "bitkini-keygen": "./gen-kini.js"
