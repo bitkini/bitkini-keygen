@@ -3,11 +3,9 @@
 const bitcoin = require('bitcoinjs-lib');
 const ecc     = require('tiny-secp256k1');
 const { ECPairFactory } = require('ecpair');
-const bip32   = require('bip32');
+const { fromSeed } = require('bip32');
 const crypto  = require('crypto');
 const chalk   = require('chalk');
-const { execSync } = require('child_process');
-
 const argv = require('minimist')(process.argv.slice(2), {
   alias: { c: 'count' },
   default: { count: 5 },
@@ -29,7 +27,7 @@ console.log(chalk.cyan.bold('\n🌴🏖️  Bitkini HD Key Generator  🍹☀️
 for (let i = 0; i < COUNT; i++) {
   // Generate a new HD root seed
   const seed = crypto.randomBytes(64);
-  const root = bip32.fromSeed(seed, kiniNet);
+  const root = fromSeed(seed, kiniNet);
   const xprv = root.toBase58();
 
   // Derive first child for verification (m/0/0)
