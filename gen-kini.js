@@ -1,60 +1,63 @@
+// gen-kini.js
 #!/usr/bin/env node
 const bitcoin = require('bitcoinjs-lib');
 const ecc     = require('tiny-secp256k1');
 const { ECPairFactory } = require('ecpair');
+const bip32   = require('bip32');
 const crypto  = require('crypto');
 const chalk   = require('chalk');
+const { execSync } = require('child_process');
 
 const argv = require('minimist')(process.argv.slice(2), {
   alias: { c: 'count' },
-  default: { count: 5 },
+  default: { count: 2 },    // presale1 + presale2
 });
 const COUNT = argv.count;
 
-// Build ECPair with Node’s crypto RNG
-const ECPair = ECPairFactory(ecc);
-const { payments } = bitcoin;
-
-// ——— Your Bitkini mainnet params ———
+// Bitkini mainnet params
 const kiniNet = {
   messagePrefix: '\x18Bitkini Signed Message:\n',
   bech32:        'kini',
-  bip32: {
-    public:  0x0488b21e,
-    private: 0x0488ade4,
-  },
-  pubKeyHash: 0x2d,  // 45 decimal → Base58 “K…”
-  scriptHash: 0x2d,  // same “K…” for P2SH
-  wif:        0x80,  // 128 decimal → WIF prefix
+  bip32: { public: 0x0488b21e, private: 0x0488ade4 },
+  pubKeyHash:  0x2d,
+  scriptHash:  0x2d,
+  wif:          0x80,
 };
 
-// Header
-console.log(chalk.cyan.bold('\n🌴🏖️  Bitkini Key Generator  🍹☀️\n'));
+console.log(chalk.cyan.bold('\n🌴🏖️  Bitkini HD Key Generator  🍹☀️\n'));
 
 for (let i = 0; i < COUNT; i++) {
-  // 1) Generate keypair
-  const keyPair = ECPair.makeRandom({
-    network: kiniNet,
-    rng: size => crypto.randomBytes(size),
-  });
+  // Generate a new HD root seed
+  const seed = crypto.randomBytes(64);
+  const root = bip32.fromSeed(seed, kiniNet);
+  const xprv = root.toBase58();
 
-  // 2) Extract components
-  const privHex = keyPair.privateKey.toString('hex');
-  const wif     = keyPair.toWIF();
-  const pubHex  = keyPair.publicKey.toString('hex');
-  const { address } = payments.p2pkh({
-    pubkey:  Buffer.from(keyPair.publicKey),
-    network: kiniNet,
-  });
+  // Derive first child for verification (m/0/0)
+  const child = root.derivePath('m/0/0');
+  const keyPair = ECPairFactory(ecc).fromPrivateKey(child.privateKey, { network: kiniNet });
+  const wif    = keyPair.toWIF();
+  const pubhex = keyPair.publicKey.toString('hex');
+  const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey, network: kiniNet });
 
-  // 3) Print a styled block
+  // Build ranged descriptor and fetch checksum
+  const rawDesc = `pk(${xprv}/0/*)`;
+  const info    = execSync(`./bitkini-cli -datadir=\"$DATADIR\" getdescriptorinfo \"${rawDesc}\"\`).toString();
+  const checksum = JSON.parse(info).checksum;
+  const descRanged = `${rawDesc}#${checksum}`;
+
+  // Print block
   console.log(chalk.yellow('───────────────────────────────────────────'));
-  console.log(chalk.green.bold(`Key #${i+1}`));
-  console.log(`${chalk.magenta('PrivKey (hex):')} ${privHex}`);
-  console.log(`${chalk.magenta('WIF:          ')} ${chalk.white.bold(wif)}`);
-  console.log(`${chalk.magenta('PubKey (hex): ')} ${pubHex}`);
-  console.log(`${chalk.magenta('Address:      ')} ${chalk.white.bold(address)}`);
+  console.log(chalk.green.bold(`HD Root #${i+1}`));
+  console.log(`${chalk.magenta('Master XPRV:')} ${xprv}`);
+  console.log(`${chalk.magenta('Sample Child Path (m/0/0)')}  → ${address}`);
+  console.log(`${chalk.magenta('Child WIF:')} ${wif}`);
+  console.log(`${chalk.magenta('Child PubKey:')} ${pubhex}`);
+  console.log(chalk.blue(`
+# Import as active, ranged descriptor for presale${i+1} wallet:`));
+  console.log(`./bitkini-cli -datadir="$DATADIR" -rpcwallet=presale${i+1} importdescriptors '[{` +
+              `"desc":"${descRanged}","active":true,"range":[0,0],"timestamp":0}]'`);
+  console.log();
 }
 
 console.log(chalk.yellow('───────────────────────────────────────────\n'));
-console.log(chalk.blue.bold('✨  Never share your private keys with anyone! Generate those only when you are offline.  ✨\n'));
+console.log(chalk.blue.bold('✨  Import these ranged descriptors to enable auto-selection!  ✨\n'));
