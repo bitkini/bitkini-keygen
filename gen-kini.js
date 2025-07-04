@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// gen-kini.js
+// gen-kini.js — deriving BIP84 / 0 / change / index
 
 const bitcoin          = require('bitcoinjs-lib')
 const ecc              = require('tiny-secp256k1')
@@ -7,7 +7,6 @@ const { BIP32Factory } = require('bip32')
 const bip32            = BIP32Factory(ecc)
 const crypto           = require('crypto')
 const chalk            = require('chalk')
-const { execSync }     = require('child_process')
 const argv             = require('minimist')(process.argv.slice(2), {
   alias:   { c: 'count' },
   default: { count: 5 },
@@ -30,28 +29,31 @@ const kiniNet = {
 console.log(chalk.cyan.bold('\n🌴🏖️  Bitkini HD Key Generator  🍹☀️\n'))
 
 for (let i = 0; i < COUNT; i++) {
-  // Generate a new HD root seed
+  // 1) Generate a new HD root seed
   const seed = crypto.randomBytes(64)
   const root = bip32.fromSeed(seed, kiniNet)
   const xprv = root.toBase58()
 
-  // Derive first child for verification (m/0/0)
-  const child   = root.derivePath('m/0/0')
-  const keyPair = require('ecpair').ECPairFactory(ecc).fromPrivateKey(child.privateKey, { network: kiniNet })
-  const wif     = keyPair.toWIF()
-  const pubhex  = keyPair.publicKey.toString('hex')
-  const { address } = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey, network: kiniNet })
-
-  // (Optional) descriptor logic could go here
-
-  // Print block
   console.log(chalk.yellow('───────────────────────────────────────────'))
   console.log(chalk.green.bold(`HD Root #${i+1}`))
   console.log(`${chalk.magenta('Master XPRV:')}          ${xprv}`)
-  console.log(`${chalk.magenta('Sample Child (m/0/0):')} → ${address}`)
-  console.log(`${chalk.magenta('Child WIF:')}            ${wif}`)
-  console.log(`${chalk.magenta('Child PubKey:')}         ${pubhex}`)
-  console.log()
+
+  // 2) Derive three sample children at BIP84 external chain (change=0)
+  for (let idx = 0; idx < 3; idx++) {
+    const path = `m/84h/0h/0h/0/${idx}`
+    const child = root.derivePath(path)
+
+    // Native SegWit (P2WPKH)
+    const { address, output: scriptPubKey } = bitcoin.payments.p2wpkh({
+      pubkey: child.publicKey,
+      network: kiniNet,
+    })
+
+    console.log(`${chalk.magenta(`Sample #${idx+1} Path:`)} ${path}`)
+    console.log(`${chalk.magenta(`Sample #${idx+1} Addr:`)} → ${address}`)
+    console.log(`${chalk.magenta(`Sample #${idx+1} SPK:`)}  → ${scriptPubKey.toString('hex')}`)
+    console.log()
+  }
 }
 
 console.log(chalk.yellow('───────────────────────────────────────────\n'))
