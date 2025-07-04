@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// gen-kini.js — deriving BIP84 / 0 / change / index
+// gen-kini.js — BIP84 m/84'/0'/0'/0/{0,1,2}
 
 const bitcoin          = require('bitcoinjs-lib')
 const ecc              = require('tiny-secp256k1')
@@ -29,7 +29,7 @@ const kiniNet = {
 console.log(chalk.cyan.bold('\n🌴🏖️  Bitkini HD Key Generator  🍹☀️\n'))
 
 for (let i = 0; i < COUNT; i++) {
-  // 1) Generate a new HD root seed
+  // 1) New HD root
   const seed = crypto.randomBytes(64)
   const root = bip32.fromSeed(seed, kiniNet)
   const xprv = root.toBase58()
@@ -38,11 +38,10 @@ for (let i = 0; i < COUNT; i++) {
   console.log(chalk.green.bold(`HD Root #${i+1}`))
   console.log(`${chalk.magenta('Master XPRV:')}          ${xprv}`)
 
-  // 2) Derive three sample children at BIP84 external chain (change=0)
+  // 2) Derive three sample children at m/84'/0'/0'/0/{0,1,2}
   for (let idx = 0; idx < 3; idx++) {
-    // Hardened steps use apostrophe (') not 'h'
     const path = `m/84'/0'/0'/0/${idx}`
-    const child = root.derivePath(path)
+    const child = root.derivePath(path)      // now valid
 
     // Native SegWit (P2WPKH)
     const { address, output: scriptPubKey } = bitcoin.payments.p2wpkh({
