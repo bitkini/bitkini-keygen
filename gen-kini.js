@@ -40,7 +40,8 @@ for (let i = 0; i < COUNT; i++) {
 
   // 2) Derive three sample children at BIP84 external chain (change=0)
   for (let idx = 0; idx < 3; idx++) {
-    const path = `m/84h/0h/0h/0/${idx}`
+    // Hardened steps use apostrophe (') not 'h'
+    const path = `m/84'/0'/0'/0/${idx}`
     const child = root.derivePath(path)
 
     // Native SegWit (P2WPKH)
